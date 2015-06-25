@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+
+require 'autodeploy_bootstrap'
+
+# TODO
+# config file
+
+  
+# TODO: allow hostname override
+my_hostname = Socket.gethostname
+my_hostname = "eservice46-1"
+host = AutodeployBootstrap::Host.first(:name => my_hostname)
+
+deploy_plan = AutodeployBootstrap::DeploymentPlan.new(my_hostname)
+
+puts deploy_plan.to_xml

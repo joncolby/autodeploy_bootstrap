@@ -1,0 +1,6 @@
+require 'logger'
+require 'time'
+require 'autodeploy_bootstrap'
+require 'minitest/autorun'
+require 'minitest/unit'
+require 'minitest/pride'
