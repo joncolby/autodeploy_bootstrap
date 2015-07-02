@@ -1,5 +1,4 @@
 require 'data_mapper'
-require_relative 'config_dm'
 
 module AutodeployBootstrap 
   

@@ -1,0 +1,13 @@
+---
+#autodeploy_script_path: /opt/autodeploy/lib/autodeploy-scripts.jar
+autodeploy_script_path: /opt/autodeploy/lib/test.sh
+environment: Production
+database_host: localhost
+database_name: autodeploy
+database_user: autodeploy
+database_password: autodeploy
+database_log_level: info
+#log_file: /var/log/autodeploy/autodeploy-bootstrap.log
+log_file: STDOUT
+log_level: DEBUG
+temp_dir: /tmp

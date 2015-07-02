@@ -1,16 +1,47 @@
 #!/usr/bin/env ruby
 
 require 'autodeploy_bootstrap'
+require 'optparse'
 
-# TODO
-# config file
-
+environment = nil
+hostname = nil
+OptParse.new(banner ="Usage: #{$0} [options]") do |opts|
+  opts.release = AutodeployBootstrap::VERSION
   
-# TODO: allow hostname override
-my_hostname = Socket.gethostname
-my_hostname = "eservice46-1"
-host = AutodeployBootstrap::Host.first(:name => my_hostname)
+  opts.on("-e", "--environment ENVIRONMENT", "if none provided, autodiscovery is attempted") do |e|
+    environment = e
+    $LOGGER.info "Environment set to: #{e}"   
+  end  
+  
+  opts.on("-n", "--name HOSTNAME", "if none provided, autodiscovery is attempted") do |n|
+    hostname = n
+    $LOGGER.info "Hostname set to: #{n}"   
+  end 
+  
+  opts.on("-v", "--version", "Display version information") do |v|
+    puts opts.release
+    exit
+  end
+    opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit 
+  end
+end.parse!
 
-deploy_plan = AutodeployBootstrap::DeploymentPlan.new(my_hostname)
+hostname ||= Socket.gethostname
 
-puts deploy_plan.to_xml
+begin
+  environment ||= AutodeployBootstrap.my_environment
+  deploy_plan = AutodeployBootstrap::DeploymentPlan.new(hostname, environment)
+  deploy_plan.save
+rescue StandardError => e
+  $LOGGER.error("Program terminated due to error: #{e.message}")
+  exit!
+end
+
+deployment = AutodeployBootstrap::Deployment.new(deploy_plan.path)
+results = deployment.run
+
+results.each_pair do |k,v|
+  puts "#{k} ===> #{v}"
+end

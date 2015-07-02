@@ -9,12 +9,10 @@ create deployment plan xml stub
 get XML for all apps
 add apps xml to deploy plan xml
 
-save xml
+X save xml
 
 trigger autodeploy script
 
 report status (based on exit code)
 
 send report via (email, slack)
-
-TODO: autodeploy api method =>  get xml with latest version for application

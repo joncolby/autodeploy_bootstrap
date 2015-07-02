@@ -1,16 +1,22 @@
 require 'nokogiri'
+require_relative 'configuration'
 
 module AutodeployBootstrap 
-  
+      
   class DeploymentPlan
-    
-    def initialize(hostname)
+    include AutodeployBootstrap
+ 
+    def initialize(hostname, environment)
       @hostname = hostname
+      @environment = environment
     end
-    
+
     def to_xml
       a_host = AutodeployBootstrap::Host.first(:name => @hostname)
-      a_environment = AutodeployBootstrap::Environment.first(:name => AutodeployBootstrap.my_environment)
+      raise StandardError, "No host found in autodeploy database with name '#{@hostname}'" if a_host.nil?
+      a_environment = AutodeployBootstrap::Environment.first(:name => @environment)
+      $LOGGER.debug "Deployment Plan Environment: #{a_environment}"
+      raise StandardError, "No environment found in autodeploy database with name '#{@environment}'" if a_environment.nil?
       a_repo = a_environment.repo
       a_property_assembler = a_environment.property_assembler
       a_host_class = AutodeployBootstrap::HostClass.get(a_host.host_class_id)
@@ -29,9 +35,7 @@ module AutodeployBootstrap
               xml.url(:url => a_property_assembler.config_assembler_url)
             }
             xml.forceDeploy true
-            ######################
-            #### APPLICATIONS HERE
-            #######################
+            # APPLICATIONS
             a_applications.each do |app|
               xml.application(:name => app.name, :id => app.id) {
                 xml.type app.type
@@ -56,18 +60,17 @@ module AutodeployBootstrap
                 xml.start_on_deploy app.start_on_deploy
                 xml.assemble_properties app.assemble_properties
                 xml.doProbe app.do_probe
-                
-                #
-                #<probeAuthMethod>none</probeAuthMethod>
-                #<probeBasicAuthUser></probeBasicAuthUser>
-                #<probeBasicAuthPassword></probeBasicAuthPassword>
-                #<probeAuthUser />
-                #<probeAuthPassword />
-                #<modulename>mobile-public-search-germany-webapp</modulename>
-                #<testUrls>
-                #  <testUrl>%CONTEXT%/release-info</testUrl>
-                #</testUrls>
-                #
+                xml.probeAuthMethod app.probe_auth_method
+                xml.probeBasicAuthUser app.probe_auth_user
+                xml.probeBasicAuthPassword app.probe_auth_password
+                xml.probeAuthUser
+                xml.probeAuthPassword
+                xml.modulename
+                xml.testUrls {                  
+                  app.test_urls.split(',').each do |t|               
+                    xml.testUrl t
+                  end
+                }
               }
             end
           }
@@ -78,7 +81,14 @@ module AutodeployBootstrap
       
     end
     
+    def save 
+      File.open(File.expand_path("deploy.xml", CONFIG[:temp_dir]), 'w') { |file| file.write(self.to_xml) }
+    end
     
+    def path
+      CONFIG[:temp_dir] + '/deploy.xml'
+    end
+
   end
 end
 
